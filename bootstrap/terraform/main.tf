@@ -258,8 +258,7 @@ locals {
 #---------------------------------------------------------------
 module "upbound_irsa_aws" {
   count = local.upbound_aws_provider.enable == true ? 1 : 0
-  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
-  version = "~> 5.30"
+  source  = "./modules/iam-role-for-service-accounts-eks"
 
   role_name_prefix = "${local.name}-upbound-aws-"
   assume_role_condition_test = "StringLike"
@@ -275,6 +274,7 @@ module "upbound_irsa_aws" {
     }
   }
 
+  audience = var.audience
   tags = local.tags
 }
 
@@ -322,8 +322,7 @@ resource "kubectl_manifest" "upbound_aws_provider_config" {
 #---------------------------------------------------------------
 module "irsa_aws_provider" {
   count = local.aws_provider.enable == true ? 1 : 0
-  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
-  version = "~> 5.30"
+  source  = "./modules/iam-role-for-service-accounts-eks"
 
   role_name_prefix = "${local.name}-aws-provider-"
   assume_role_condition_test = "StringLike"
@@ -339,6 +338,7 @@ module "irsa_aws_provider" {
     }
   }
 
+  audience = var.audience
   tags = local.tags
 }
 

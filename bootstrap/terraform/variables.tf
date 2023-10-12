@@ -80,3 +80,7 @@ variable "tags" {
   type = map(string)
   default = {}
 }
+
+variable "audience" {
+  default = "sts.amazonaws.com"
+}
