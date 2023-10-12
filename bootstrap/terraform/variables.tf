@@ -48,3 +48,30 @@ variable "enable_helm_provider" {
   description = "Installs the helm provider"
   default     = true
 }
+
+variable "aws_account_id" {
+  type = string
+}
+
+variable "oidc_provider" {
+  type = string
+}
+
+variable "vpc_id" {
+  type = string
+}
+
+variable "families" {
+  default = [
+    "dynamodb",
+    "elasticache",
+    "iam",
+    "kms",
+    "lambda",
+    "rds",
+    "s3",
+    "sns",
+    "sqs",
+    "vpc"
+  ]
+}

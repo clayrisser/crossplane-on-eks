@@ -1,46 +1,46 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-provider "aws" {
-  region = local.region
-}
+# provider "aws" {
+#   region = local.region
+# }
 
-provider "kubernetes" {
-  host                   = module.eks.cluster_endpoint
-  cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
-  exec {
-    api_version = "client.authentication.k8s.io/v1beta1"
-    args        = ["eks", "get-token", "--cluster-name", local.name, "--region", var.region]
-    command     = "aws"
-  }
-}
+# provider "kubernetes" {
+#   host                   = module.eks.cluster_endpoint
+#   cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
+#   exec {
+#     api_version = "client.authentication.k8s.io/v1beta1"
+#     args        = ["eks", "get-token", "--cluster-name", local.name, "--region", var.region]
+#     command     = "aws"
+#   }
+# }
 
-provider "helm" {
-  kubernetes {
-    host                   = module.eks.cluster_endpoint
-    cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
-    exec {
-      api_version = "client.authentication.k8s.io/v1beta1"
-      args        = ["eks", "get-token", "--cluster-name", local.name, "--region", var.region]
-      command     = "aws"
-    }
-  }
-}
+# provider "helm" {
+#   kubernetes {
+#     host                   = module.eks.cluster_endpoint
+#     cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
+#     exec {
+#       api_version = "client.authentication.k8s.io/v1beta1"
+#       args        = ["eks", "get-token", "--cluster-name", local.name, "--region", var.region]
+#       command     = "aws"
+#     }
+#   }
+# }
 
-provider "kubectl" {
-  host                   = module.eks.cluster_endpoint
-  cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
-  exec {
-    api_version = "client.authentication.k8s.io/v1beta1"
-    args        = ["eks", "get-token", "--cluster-name", local.name, "--region", var.region]
-    command     = "aws"
-  }
-  load_config_file       = false
-  apply_retry_count      = 15
-}
+# provider "kubectl" {
+#   host                   = module.eks.cluster_endpoint
+#   cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
+#   exec {
+#     api_version = "client.authentication.k8s.io/v1beta1"
+#     args        = ["eks", "get-token", "--cluster-name", local.name, "--region", var.region]
+#     command     = "aws"
+#   }
+#   load_config_file       = false
+#   apply_retry_count      = 15
+# }
 
-data "aws_caller_identity" "current" {}
-data "aws_availability_zones" "available" {}
+# data "aws_caller_identity" "current" {}
+# data "aws_availability_zones" "available" {}
 
 locals {
   name   = var.name
@@ -63,149 +63,149 @@ locals {
 # EBS CSI Driver Role
 #---------------------------------------------------------------
 
-module "ebs_csi_driver_irsa" {
-  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
-  version = "~> 5.14"
+# module "ebs_csi_driver_irsa" {
+#   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
+#   version = "~> 5.14"
 
-  role_name = "${local.name}-ebs-csi-driver"
+#   role_name = "${local.name}-ebs-csi-driver"
 
-  attach_ebs_csi_policy = true
+#   attach_ebs_csi_policy = true
 
-  oidc_providers = {
-    main = {
-      provider_arn               = module.eks.oidc_provider_arn
-      namespace_service_accounts = ["kube-system:ebs-csi-controller-sa"]
-    }
-  }
+#   oidc_providers = {
+#     main = {
+#       provider_arn               = module.eks.oidc_provider_arn
+#       namespace_service_accounts = ["kube-system:ebs-csi-controller-sa"]
+#     }
+#   }
 
-  tags = local.tags
-}
+#   tags = local.tags
+# }
 
 #---------------------------------------------------------------
 # EKS Cluster
 #---------------------------------------------------------------
 
-module "eks" {
-  source  = "terraform-aws-modules/eks/aws"
-  version = "~> 19.13"
+# module "eks" {
+#   source  = "terraform-aws-modules/eks/aws"
+#   version = "~> 19.13"
 
-  cluster_name                   = local.name
-  cluster_version                = local.cluster_version
-  cluster_endpoint_public_access = true
-  kms_key_enable_default_policy  = true
+#   cluster_name                   = local.name
+#   cluster_version                = local.cluster_version
+#   cluster_endpoint_public_access = true
+#   kms_key_enable_default_policy  = true
 
-  cluster_addons = {
-    aws-ebs-csi-driver = {
-      service_account_role_arn = module.ebs_csi_driver_irsa.iam_role_arn
-    }
-    coredns =    {}
-    kube-proxy = {}
-    vpc-cni =    {}
-  }
+#   cluster_addons = {
+#     aws-ebs-csi-driver = {
+#       service_account_role_arn = module.ebs_csi_driver_irsa.iam_role_arn
+#     }
+#     coredns =    {}
+#     kube-proxy = {}
+#     vpc-cni =    {}
+#   }
 
-  vpc_id     = module.vpc.vpc_id
-  subnet_ids = module.vpc.private_subnets
+#   vpc_id     = module.vpc.vpc_id
+#   subnet_ids = module.vpc.private_subnets
 
-  # for production cluster, add a node group for add-ons that should not be inerrupted such as coredns
-  eks_managed_node_groups = {
-    initial = {
-      instance_types  = ["m6i.large", "m5.large", "m5n.large", "m5zn.large"]
-      capacity_type   = var.capacity_type # defaults to SPOT
-      min_size        = 1
-      max_size        = 5
-      desired_size    = 3
-      subnet_ids      = module.vpc.private_subnets
-    }
-  }
+#   # for production cluster, add a node group for add-ons that should not be inerrupted such as coredns
+#   eks_managed_node_groups = {
+#     initial = {
+#       instance_types  = ["m6i.large", "m5.large", "m5n.large", "m5zn.large"]
+#       capacity_type   = var.capacity_type # defaults to SPOT
+#       min_size        = 1
+#       max_size        = 5
+#       desired_size    = 3
+#       subnet_ids      = module.vpc.private_subnets
+#     }
+#   }
 
-  tags = local.tags
-}
+#   tags = local.tags
+# }
 
 #---------------------------------------------------------------
 # EKS Addons
 #---------------------------------------------------------------
 
-module "eks_blueprints_addons" {
-  source  = "aws-ia/eks-blueprints-addons/aws"
-  version = "1.8.0"
+# module "eks_blueprints_addons" {
+#   source  = "aws-ia/eks-blueprints-addons/aws"
+#   version = "1.8.0"
 
-  cluster_name          = module.eks.cluster_name
-  cluster_endpoint      = module.eks.cluster_endpoint
-  cluster_version       = module.eks.cluster_version
-  oidc_provider_arn     = module.eks.oidc_provider_arn
-  enable_argocd         = true
-  argocd = {
-    namespace       = "argocd"
-    chart_version   = "5.46.1" # ArgoCD v2.8.3
-    values          = [
-      templatefile("${path.module}/argocd-values.yaml", {
-        crossplane_aws_provider_enable = local.aws_provider.enable
-        crossplane_upbound_aws_provider_enable = local.upbound_aws_provider.enable
-        crossplane_kubernetes_provider_enable = local.kubernetes_provider.enable
-      })]
-  }
-  enable_gatekeeper                = true
-  enable_metrics_server            = true
-  enable_kube_prometheus_stack     = true
-  kube_prometheus_stack = {
-    values = [yamlencode({
-      prometheus = {
-        service = {
-          type = "LoadBalancer"
-        }
-      }
-    })]
-  }
+#   cluster_name          = module.eks.cluster_name
+#   cluster_endpoint      = module.eks.cluster_endpoint
+#   cluster_version       = module.eks.cluster_version
+#   oidc_provider_arn     = module.eks.oidc_provider_arn
+#   enable_argocd         = true
+#   argocd = {
+#     namespace       = "argocd"
+#     chart_version   = "5.46.1" # ArgoCD v2.8.3
+#     values          = [
+#       templatefile("${path.module}/argocd-values.yaml", {
+#         crossplane_aws_provider_enable = local.aws_provider.enable
+#         crossplane_upbound_aws_provider_enable = local.upbound_aws_provider.enable
+#         crossplane_kubernetes_provider_enable = local.kubernetes_provider.enable
+#       })]
+#   }
+#   enable_gatekeeper                = true
+#   enable_metrics_server            = true
+#   enable_kube_prometheus_stack     = true
+#   kube_prometheus_stack = {
+#     values = [yamlencode({
+#       prometheus = {
+#         service = {
+#           type = "LoadBalancer"
+#         }
+#       }
+#     })]
+#   }
 
-  depends_on = [module.eks.eks_managed_node_groups]
-}
+#   depends_on = [module.eks.eks_managed_node_groups]
+# }
 
 #---------------------------------------------------------------
 # Crossplane
 #---------------------------------------------------------------
-module "crossplane" {
-  source = "github.com/awslabs/crossplane-on-eks/bootstrap/terraform/addon/"
-  enable_crossplane = true
-  crossplane = {
-    values = [yamlencode({
-      args    = ["--enable-environment-configs"]
-      metrics = {
-        enabled = true
-      }
-      resourcesCrossplane = {
-        limits = {
-          cpu = "1"
-          memory = "2Gi"
-        }
-        requests = {
-          cpu = "100m"
-          memory = "1Gi"
-        }
-      }
-      resourcesRBACManager = {
-        limits = {
-          cpu = "500m"
-          memory = "1Gi"
-        }
-        requests = {
-          cpu = "100m"
-          memory = "512Mi"
-        }
-      }
-    })]
-  }
+# module "crossplane" {
+#   source = "github.com/awslabs/crossplane-on-eks/bootstrap/terraform/addon/"
+#   enable_crossplane = true
+#   crossplane = {
+#     values = [yamlencode({
+#       args    = ["--enable-environment-configs"]
+#       metrics = {
+#         enabled = true
+#       }
+#       resourcesCrossplane = {
+#         limits = {
+#           cpu = "1"
+#           memory = "2Gi"
+#         }
+#         requests = {
+#           cpu = "100m"
+#           memory = "1Gi"
+#         }
+#       }
+#       resourcesRBACManager = {
+#         limits = {
+#           cpu = "500m"
+#           memory = "1Gi"
+#         }
+#         requests = {
+#           cpu = "100m"
+#           memory = "512Mi"
+#         }
+#       }
+#     })]
+#   }
 
-  depends_on = [module.eks.eks_managed_node_groups]
-}
+#   depends_on = [module.eks.eks_managed_node_groups]
+# }
 
 resource "kubectl_manifest" "environmentconfig" {
   yaml_body = templatefile("${path.module}/environmentconfig.yaml", {
-    awsAccountID = data.aws_caller_identity.current.account_id
-    eksOIDC      = module.eks.oidc_provider
-    vpcID        = module.vpc.vpc_id
+    awsAccountID = var.aws_account_id
+    eksOIDC      = var.oidc_provider
+    vpcID        = var.vpc_id
   })
 
-  depends_on = [module.crossplane]
+  # depends_on = [module.crossplane]
 }
 
 #---------------------------------------------------------------
@@ -213,24 +213,14 @@ resource "kubectl_manifest" "environmentconfig" {
 #---------------------------------------------------------------
 locals {
   crossplane_namespace = "crossplane-system"
+  oidc_provider_arn = "arn:aws:iam::${var.aws_account_id}:oidc-provider/${var.oidc_provider}"
   
   upbound_aws_provider = {
     enable               = var.enable_upbound_aws_provider # defaults to true
     version              = "v0.40.0"
     controller_config    = "upbound-aws-controller-config"
     provider_config_name = "aws-provider-config" #this is the providerConfigName used in all the examples in this repo
-    families = [
-      "dynamodb",
-      "elasticache",
-      "iam",
-      "kms",
-      "lambda",
-      "rds",
-      "s3",
-      "sns",
-      "sqs",
-      "vpc"
-    ]
+    families             = var.families
   }
 
   aws_provider = {
@@ -280,7 +270,7 @@ module "upbound_irsa_aws" {
 
   oidc_providers = {
     main = {
-      provider_arn               = module.eks.oidc_provider_arn
+      provider_arn               = local.oidc_provider_arn
       namespace_service_accounts = ["${local.crossplane_namespace}:upbound-aws-provider-*"]
     }
   }
@@ -295,7 +285,7 @@ resource "kubectl_manifest" "upbound_aws_controller_config" {
     controller-config = local.upbound_aws_provider.controller_config
   })
 
-  depends_on = [module.crossplane]
+  # depends_on = [module.crossplane]
 }
 
 resource "kubectl_manifest" "upbound_aws_provider" {
@@ -344,7 +334,7 @@ module "irsa_aws_provider" {
 
   oidc_providers = {
     main = {
-      provider_arn               = module.eks.oidc_provider_arn
+      provider_arn               = local.oidc_provider_arn
       namespace_service_accounts = ["${local.crossplane_namespace}:aws-provider-*"]
     }
   }
@@ -359,7 +349,7 @@ resource "kubectl_manifest" "aws_controller_config" {
     controller-config = local.aws_provider.controller_config
   })
 
-  depends_on = [module.crossplane]
+  # depends_on = [module.crossplane]
 }
 
 resource "kubectl_manifest" "aws_provider" {
@@ -402,7 +392,7 @@ resource "kubernetes_service_account_v1" "kubernetes_controller" {
     namespace = local.crossplane_namespace
   }
 
-  depends_on = [module.crossplane]
+  # depends_on = [module.crossplane]
 }
 
 resource "kubectl_manifest" "kubernetes_controller_clusterolebinding" {
@@ -414,7 +404,7 @@ resource "kubectl_manifest" "kubernetes_controller_clusterolebinding" {
   })
   wait = true
 
-  depends_on = [module.crossplane]
+  # depends_on = [module.crossplane]
 }
 
 resource "kubectl_manifest" "kubernetes_controller_config" {
@@ -425,7 +415,7 @@ resource "kubectl_manifest" "kubernetes_controller_config" {
   })
   wait = true
 
-  depends_on = [module.crossplane]
+  # depends_on = [module.crossplane]
 }
 
 resource "kubectl_manifest" "kubernetes_provider" {
@@ -466,7 +456,7 @@ resource "kubernetes_service_account_v1" "helm_controller" {
     namespace = local.crossplane_namespace
   }
 
-  depends_on = [module.crossplane]
+  # depends_on = [module.crossplane]
 }
 
 resource "kubectl_manifest" "helm_controller_clusterolebinding" {
@@ -478,7 +468,7 @@ resource "kubectl_manifest" "helm_controller_clusterolebinding" {
   })
   wait = true
 
-  depends_on = [module.crossplane]
+  # depends_on = [module.crossplane]
 }
 
 resource "kubectl_manifest" "helm_controller_config" {
@@ -489,7 +479,7 @@ resource "kubectl_manifest" "helm_controller_config" {
   })
   wait = true
 
-  depends_on = [module.crossplane]
+  # depends_on = [module.crossplane]
 }
 
 resource "kubectl_manifest" "helm_provider" {
@@ -525,27 +515,27 @@ resource "kubectl_manifest" "helm_provider_config" {
 # Supporting Resources
 #---------------------------------------------------------------
 
-module "vpc" {
-  source  = "terraform-aws-modules/vpc/aws"
-  version = "~> 5.0"
+# module "vpc" {
+#   source  = "terraform-aws-modules/vpc/aws"
+#   version = "~> 5.0"
 
-  name = local.vpc_name
-  cidr = local.vpc_cidr
+#   name = local.vpc_name
+#   cidr = local.vpc_cidr
 
-  azs             = local.azs
-  public_subnets  = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k)]
-  private_subnets = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k + 10)]
+#   azs             = local.azs
+#   public_subnets  = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k)]
+#   private_subnets = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k + 10)]
 
-  enable_nat_gateway   = true
-  single_nat_gateway   = true
+#   enable_nat_gateway   = true
+#   single_nat_gateway   = true
 
-  public_subnet_tags = {
-    "kubernetes.io/role/elb" = 1
-  }
+#   public_subnet_tags = {
+#     "kubernetes.io/role/elb" = 1
+#   }
 
-  private_subnet_tags = {
-    "kubernetes.io/role/internal-elb" = 1
-  }
+#   private_subnet_tags = {
+#     "kubernetes.io/role/internal-elb" = 1
+#   }
 
-  tags = local.tags
-}
+#   tags = local.tags
+# }
