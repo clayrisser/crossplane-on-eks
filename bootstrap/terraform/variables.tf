@@ -75,3 +75,8 @@ variable "families" {
     "vpc"
   ]
 }
+
+variable "tags" {
+  type = map(string)
+  default = {}
+}
